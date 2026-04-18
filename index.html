@@ -79,6 +79,7 @@
     .search-bar { display: flex; gap: 12px; margin-bottom: 28px; }
     .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px; }
     .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .place-status { font-size: 13px; color: #6b7280; margin-top: 4px; white-space: nowrap; }
 
     /* Mobile Responsive */
     @media (max-width: 768px) {
@@ -100,9 +101,38 @@
       .btn { width: 100%; margin-bottom: 8px; }
       .btn-secondary, .btn-danger, .btn-success { width: auto; margin-bottom: 0; }
       .toast-container { left: 16px; right: 16px; bottom: 16px; }
-      .table-responsive { margin: 0 -16px; padding: 0 16px; }
+      .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
       .table { min-width: 600px; }
-      .table th, .table td { padding: 10px 12px; font-size: 13px; }
+      .table th, .table td { padding: 8px 10px; font-size: 12px; }
+      .place-status { font-size: 12px; white-space: normal; }
+    }
+
+    /* Place header mobile fix */
+    @media (max-width: 768px) {
+      .place-header-wrapper {
+        padding: 16px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+      .place-header-wrapper > div:first-child {
+        width: 100%;
+        margin-right: 0;
+      }
+      .place-header-wrapper > div:last-child {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .place-header-wrapper {
+        position: relative;
+      }
+      .place-status {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal !important;
+        font-size: 12px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -112,9 +142,6 @@
       .section-title { font-size: 18px; }
       .card { padding: 16px; }
       .btn { padding: 12px 16px; font-size: 13px; }
-      .table th:nth-child(4), .table td:nth-child(4),
-      .table th:nth-child(5), .table td:nth-child(5),
-      .table th:nth-child(6), .table td:nth-child(6) { display: none; }
       .table { min-width: 500px; }
     }
   </style>
@@ -527,6 +554,7 @@
               <div key={placeName} style={{ marginBottom: 16 }}>
                 <div
                   onClick={() => setExpandedPlace(isExpanded ? null : placeName)}
+                  className="place-header-wrapper"
                   style={{
                     background: 'white',
                     padding: '20px 24px',
@@ -541,13 +569,13 @@
                   onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                 >
-                  <div>
-                    <h2 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{placeName}</h2>
-                    <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
-                      {placeDevices.length} device{placeDevices.length !== 1 ? 's' : ''} • {activeCount} active • {lockedCount} locked
+                  <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
+                    <h2 style={{ fontSize: 18, fontWeight: 600, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{placeName}</h2>
+                    <div className="place-status">
+                      {placeDevices.length} device{placeDevices.length !== 1 ? 's' : ''} / {activeCount} active / {lockedCount} locked
                     </div>
                   </div>
-                  <div style={{ fontSize: 24, color: '#6b7280', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  <div style={{ fontSize: 24, color: '#6b7280', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
                     ▼
                   </div>
                 </div>
@@ -732,30 +760,32 @@
           {logs.length === 0 ? (
             <div className="loading">No logs yet</div>
           ) : (
-            <table className="table" style={{ fontSize: 12 }}>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Roll</th>
-                  <th>UID</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log, idx) => (
-                  <tr key={idx}>
-                    <td>{new Date(log.timestamp).toLocaleString()}</td>
-                    <td>{log.roll_number}</td>
-                    <td>{log.uid}</td>
-                    <td>
-                      <span className={`badge ${log.status === 1 ? 'badge-in' : 'badge-out'}`}>
-                        {log.status === 1 ? 'IN' : 'OUT'}
-                      </span>
-                    </td>
+            <div className="table-responsive">
+              <table className="table" style={{ fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Roll</th>
+                    <th>UID</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {logs.map((log, idx) => (
+                    <tr key={idx}>
+                      <td>{new Date(log.timestamp).toLocaleString()}</td>
+                      <td>{log.roll_number}</td>
+                      <td>{log.uid}</td>
+                      <td>
+                        <span className={`badge ${log.status === 1 ? 'badge-in' : 'badge-out'}`}>
+                          {log.status === 1 ? 'IN' : 'OUT'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       );
