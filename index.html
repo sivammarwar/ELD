@@ -13,65 +13,110 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'DM Sans', sans-serif; background: #f8fafc; color: #111827; }
+    body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #0f172a; }
     .app-container { display: flex; min-height: 100vh; }
-    .sidebar { width: 240px; background: white; border-right: 1px solid #e5e7eb; padding: 24px 16px; flex-shrink: 0; }
-    .sidebar h1 { font-size: 18px; font-weight: 700; color: #1d4ed8; margin-bottom: 32px; padding: 0 8px; }
-    .nav-link { display: block; padding: 12px 16px; color: #374151; text-decoration: none; border-radius: 6px; margin-bottom: 4px; font-weight: 500; font-size: 14px; cursor: pointer; }
-    .nav-link:hover { background: #f3f4f6; }
-    .nav-link.active { background: #eff6ff; color: #1d4ed8; }
-    .main-content { flex: 1; padding: 32px; overflow-y: auto; }
-    .page-title { font-size: 28px; font-weight: 700; margin-bottom: 24px; }
-    .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 24px; }
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px; }
-    .stat-card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; }
-    .stat-label { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
-    .stat-value { font-size: 32px; font-weight: 700; color: #111827; }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-    .badge-in { background: #dcfce7; color: #16a34a; }
-    .badge-out { background: #fee2e2; color: #dc2626; }
-    .badge-locked { background: #fee2e2; color: #dc2626; }
-    .badge-online { background: #dcfce7; color: #16a34a; }
-    .btn { padding: 8px 16px; border-radius: 6px; border: none; background: #1d4ed8; color: white; font-weight: 500; cursor: pointer; font-size: 14px; }
-    .btn:hover { background: #1e40af; }
-    .btn:disabled { background: #9ca3af; cursor: not-allowed; }
-    .btn-secondary { background: white; border: 1px solid #d1d5db; color: #374151; }
-    .btn-secondary:hover { background: #f9fafb; }
+    .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; padding: 32px 20px; flex-shrink: 0; }
+    .sidebar h1 { font-size: 20px; font-weight: 700; color: #2563eb; margin-bottom: 40px; padding: 0 12px; letter-spacing: -0.5px; }
+    .nav-link { display: flex; align-items: center; padding: 14px 16px; color: #64748b; text-decoration: none; border-radius: 10px; margin-bottom: 6px; font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s ease; }
+    .nav-link:hover { background: #f8fafc; color: #334155; }
+    .nav-link.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+    .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+    .page-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: -1px; color: #0f172a; }
+    .page-subtitle { font-size: 15px; color: #64748b; margin-bottom: 32px; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1); padding: 28px; margin-bottom: 24px; border: 1px solid #e2e8f0; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+    .stat-card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1); padding: 28px; border: 1px solid #e2e8f0; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06); }
+    .stat-label { font-size: 13px; color: #64748b; margin-bottom: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 36px; font-weight: 700; color: #0f172a; letter-spacing: -1px; }
+    .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+    .badge-in { background: #dcfce7; color: #166534; }
+    .badge-out { background: #fee2e2; color: #991b1b; }
+    .badge-locked { background: #fee2e2; color: #991b1b; }
+    .badge-online { background: #dcfce7; color: #166534; }
+    .btn { padding: 10px 20px; border-radius: 10px; border: none; background: #2563eb; color: white; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s ease; letter-spacing: 0.3px; }
+    .btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: white; border: 1px solid #cbd5e1; color: #475569; }
+    .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
     .btn-danger { background: #dc2626; }
     .btn-danger:hover { background: #b91c1c; }
     .btn-success { background: #16a34a; }
     .btn-success:hover { background: #15803d; }
-    .input { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; font-family: inherit; }
-    .input:focus { outline: none; border-color: #1d4ed8; }
-    .label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
-    .form-group { margin-bottom: 16px; }
+    .input { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-family: inherit; transition: all 0.2s ease; background: #f8fafc; }
+    .input:focus { outline: none; border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    .label { display: block; font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; }
+    .form-group { margin-bottom: 20px; }
     .table { width: 100%; border-collapse: collapse; }
-    .table th { background: #f1f5f9; padding: 12px; text-align: left; font-size: 13px; font-weight: 600; color: #374151; }
-    .table td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+    .table th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 13px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
+    .table td { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #334155; }
     .table tr:last-child td { border-bottom: none; }
-    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-    .loading { color: #6b7280; font-size: 14px; }
-    .error { color: #dc2626; font-size: 14px; margin-top: 8px; }
-    .success { color: #16a34a; font-size: 14px; margin-top: 8px; }
-    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
-    .toast { background: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 8px; font-size: 14px; animation: slideIn 0.3s ease; }
+    .table tr:hover td { background: #f8fafc; }
+    .section-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #0f172a; letter-spacing: -0.5px; }
+    .loading { color: #64748b; font-size: 14px; padding: 40px; text-align: center; }
+    .error { color: #dc2626; font-size: 14px; margin-top: 8px; padding: 12px 16px; background: #fef2f2; border-radius: 10px; border: 1px solid #fecaca; }
+    .success { color: #16a34a; font-size: 14px; margin-top: 8px; padding: 12px 16px; background: #f0fdf4; border-radius: 10px; border: 1px solid #bbf7d0; }
+    .toast-container { position: fixed; bottom: 32px; right: 32px; z-index: 1000; }
+    .toast { background: white; padding: 18px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 12px; font-size: 14px; animation: slideIn 0.3s ease; border: 1px solid #e2e8f0; }
     .toast-success { border-left: 4px solid #16a34a; }
     .toast-error { border-left: 4px solid #dc2626; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .toggle-container { display: flex; gap: 8px; }
-    .toggle-btn { padding: 8px 16px; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer; font-size: 14px; }
-    .toggle-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
-    .bar-container { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    .bar-fill { height: 100%; background: #1d4ed8; transition: width 0.3s ease; }
-    .place-row { display: grid; grid-template-columns: 1fr 100px 100px 1fr; gap: 16px; align-items: center; padding: 16px; border-bottom: 1px solid #e5e7eb; }
+    .toggle-container { display: flex; gap: 10px; }
+    .toggle-btn { padding: 10px 20px; border: 1px solid #cbd5e1; background: white; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; }
+    .toggle-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
+    .toggle-btn:hover:not(.active) { background: #f8fafc; }
+    .bar-container { height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #3b82f6); transition: width 0.3s ease; }
+    .place-row { display: grid; grid-template-columns: 1fr 100px 100px 1fr; gap: 16px; align-items: center; padding: 18px; border-bottom: 1px solid #e2e8f0; transition: background 0.2s ease; }
+    .place-row:hover { background: #f8fafc; }
     .place-row:last-child { border-bottom: none; }
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
-    .modal { background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
-    .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
-    .search-bar { display: flex; gap: 12px; margin-bottom: 24px; }
-    .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+    .modal { background: white; border-radius: 16px; padding: 32px; max-width: 520px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); border: 1px solid #e2e8f0; }
+    .modal-header { font-size: 22px; font-weight: 700; margin-bottom: 20px; color: #0f172a; letter-spacing: -0.5px; }
+    .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; }
+    .search-bar { display: flex; gap: 12px; margin-bottom: 28px; }
+    .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px; }
+    .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .app-container { flex-direction: column; }
+      .sidebar { width: 100%; padding: 16px; border-right: none; border-bottom: 1px solid #e2e8f0; }
+      .sidebar h1 { font-size: 18px; margin-bottom: 20px; }
+      .main-content { padding: 20px 16px; }
+      .page-title { font-size: 24px; }
+      .card { padding: 20px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .stat-card { padding: 20px; }
+      .stat-value { font-size: 28px; }
+      .device-grid { grid-template-columns: 1fr; gap: 16px; }
+      .place-row { grid-template-columns: 1fr; gap: 12px; padding: 14px; }
+      .modal { padding: 24px; width: 95%; }
+      .modal-header { font-size: 18px; }
+      .search-bar { flex-direction: column; }
+      .toggle-container { flex-wrap: wrap; }
+      .btn { width: 100%; margin-bottom: 8px; }
+      .btn-secondary, .btn-danger, .btn-success { width: auto; margin-bottom: 0; }
+      .toast-container { left: 16px; right: 16px; bottom: 16px; }
+      .table-responsive { margin: 0 -16px; padding: 0 16px; }
+      .table { min-width: 600px; }
+      .table th, .table td { padding: 10px 12px; font-size: 13px; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .stat-value { font-size: 24px; }
+      .page-title { font-size: 20px; }
+      .section-title { font-size: 18px; }
+      .card { padding: 16px; }
+      .btn { padding: 12px 16px; font-size: 13px; }
+      .table th:nth-child(4), .table td:nth-child(4),
+      .table th:nth-child(5), .table td:nth-child(5),
+      .table th:nth-child(6), .table td:nth-child(6) { display: none; }
+      .table { min-width: 500px; }
+    }
   </style>
 </head>
 <body>
@@ -388,6 +433,7 @@
               device_code: device.device_code,
               device_email: device.device_email,
               pilot_uid: device.pilot_uid,
+              upload_uid: device.upload_uid,
               email_unknown_scans: device.email_unknown_scans,
               email_status_for: device.email_status_for,
               can_register: device.can_register,
@@ -589,6 +635,16 @@
               className="input"
               value={formData.pilot_uid || ''}
               onChange={(e) => handleChange('pilot_uid', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="label">Upload Trigger UID (card UID to trigger manual upload)</label>
+            <input
+              className="input"
+              value={formData.upload_uid || ''}
+              onChange={(e) => handleChange('upload_uid', e.target.value)}
+              placeholder="NONE"
             />
           </div>
 
@@ -856,53 +912,55 @@
           </div>
 
           <div className="card">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Roll Number</th>
-                  <th>UID</th>
-                  <th>Codes</th>
-                  <th>Status</th>
-                  <th>Pilot</th>
-                  <th>Active</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.map(student => (
-                  <tr key={student.uid}>
-                    <td>{student.name}</td>
-                    <td>{student.roll_number}</td>
-                    <td>{student.uid}</td>
-                    <td>{student.codes}</td>
-                    <td>
-                      <span className={`badge ${student.status === 1 ? 'badge-in' : 'badge-out'}`}>
-                        {student.status === 1 ? 'IN' : 'OUT'}
-                      </span>
-                    </td>
-                    <td>{student.is_pilot ? 'Yes' : 'No'}</td>
-                    <td>{student.is_active ? 'Yes' : 'No'}</td>
-                    <td>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '4px 8px', fontSize: 12, marginRight: 4 }}
-                        onClick={() => handleEdit(student)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className={`btn ${student.is_active ? 'btn-danger' : 'btn-success'}`}
-                        style={{ padding: '4px 8px', fontSize: 12 }}
-                        onClick={() => handleToggleActive(student)}
-                      >
-                        {student.is_active ? 'Deactivate' : 'Reactivate'}
-                      </button>
-                    </td>
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Roll Number</th>
+                    <th>UID</th>
+                    <th>Codes</th>
+                    <th>Status</th>
+                    <th>Pilot</th>
+                    <th>Active</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredStudents.map(student => (
+                    <tr key={student.uid}>
+                      <td>{student.name}</td>
+                      <td>{student.roll_number}</td>
+                      <td>{student.uid}</td>
+                      <td>{student.codes}</td>
+                      <td>
+                        <span className={`badge ${student.status === 1 ? 'badge-in' : 'badge-out'}`}>
+                          {student.status === 1 ? 'IN' : 'OUT'}
+                        </span>
+                      </td>
+                      <td>{student.is_pilot ? 'Yes' : 'No'}</td>
+                      <td>{student.is_active ? 'Yes' : 'No'}</td>
+                      <td>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '4px 8px', fontSize: 12, marginRight: 4 }}
+                          onClick={() => handleEdit(student)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className={`btn ${student.is_active ? 'btn-danger' : 'btn-success'}`}
+                          style={{ padding: '4px 8px', fontSize: 12 }}
+                          onClick={() => handleToggleActive(student)}
+                        >
+                          {student.is_active ? 'Deactivate' : 'Reactivate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {showModal && (
@@ -1077,46 +1135,48 @@
           </div>
 
           <div className="card">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>UID</th>
-                  <th>Device ID</th>
-                  <th>Place Name</th>
-                  <th>Email Target</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredScans.map((scan, idx) => (
-                  <tr key={idx}>
-                    <td>{new Date(scan.created_at).toLocaleString()}</td>
-                    <td>{scan.uid}</td>
-                    <td>{scan.device_id}</td>
-                    <td>{scan.place_name}</td>
-                    <td>{scan.to_email}</td>
-                    <td>
-                      <span className={`badge ${scan.reviewed ? 'badge-in' : 'badge-out'}`}>
-                        {scan.reviewed ? 'Reviewed' : 'Pending'}
-                      </span>
-                    </td>
-                    <td>
-                      {!scan.reviewed && (
-                        <button
-                          className="btn btn-secondary"
-                          style={{ padding: '4px 8px', fontSize: 12 }}
-                          onClick={() => handleMarkReviewed(scan)}
-                        >
-                          Mark as Reviewed
-                        </button>
-                      )}
-                    </td>
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>UID</th>
+                    <th>Device ID</th>
+                    <th>Place Name</th>
+                    <th>Email Target</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredScans.map((scan, idx) => (
+                    <tr key={idx}>
+                      <td>{new Date(scan.created_at).toLocaleString()}</td>
+                      <td>{scan.uid}</td>
+                      <td>{scan.device_id}</td>
+                      <td>{scan.place_name}</td>
+                      <td>{scan.to_email}</td>
+                      <td>
+                        <span className={`badge ${scan.reviewed ? 'badge-in' : 'badge-out'}`}>
+                          {scan.reviewed ? 'Reviewed' : 'Pending'}
+                        </span>
+                      </td>
+                      <td>
+                        {!scan.reviewed && (
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 8px', fontSize: 12 }}
+                            onClick={() => handleMarkReviewed(scan)}
+                          >
+                            Mark as Reviewed
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             {filteredScans.length === 0 && (
               <div style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
                 No unknown scans to display
@@ -1135,7 +1195,12 @@
         device_id: '',
         place_name: '',
         device_code: '',
-        pilot_uid: ''
+        pilot_uid: '',
+        device_email: '',
+        upload_uid: '',
+        can_register: false,
+        email_unknown_scans: false,
+        email_status_for: 'NONE'
       });
       const [registerMessage, setRegisterMessage] = useState(null);
 
@@ -1166,21 +1231,38 @@
             return;
           }
 
-          const { error } = await supabase.rpc('ensure_device_schema', {
-            p_device_id: formData.device_id,
-            p_place_name: formData.place_name,
-            p_device_code: formData.device_code,
-            p_pilot_uid: formData.pilot_uid || null
+          const { error } = await supabase.from('devices').upsert({
+            device_id: formData.device_id,
+            place_name: formData.place_name,
+            device_code: formData.device_code,
+            pilot_uid: formData.pilot_uid || 'NONE',
+            device_email: formData.device_email || '',
+            upload_uid: formData.upload_uid || '',
+            can_register: formData.can_register,
+            email_unknown_scans: formData.email_unknown_scans,
+            email_status_for: formData.email_status_for,
+            is_active: true,
+            firmware_version: 'MANUAL_REG'
           });
 
           if (error) throw error;
 
-          setRegisterMessage('Device registered. It will appear in Places once the ESP connects and syncs.');
+          setRegisterMessage('Device registered successfully!');
           addToast('Device registered successfully');
-          setFormData({ device_id: '', place_name: '', device_code: '', pilot_uid: '' });
-          setTimeout(() => setRegisterMessage(null), 5000);
+          setFormData({
+            device_id: '',
+            place_name: '',
+            device_code: '',
+            pilot_uid: '',
+            device_email: '',
+            upload_uid: '',
+            can_register: false,
+            email_unknown_scans: false,
+            email_status_for: 'NONE'
+          });
         } catch (err) {
-          addToast('Failed to register device: ' + err.message, 'error');
+          setRegisterMessage('Registration failed: ' + err.message);
+          addToast('Registration failed: ' + err.message, 'error');
         }
       };
 
@@ -1211,7 +1293,7 @@
 
           <div className="card">
             <h2 className="section-title">Add New Device (Manual Registration)</h2>
-            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
               Normally devices self-register when the ESP boots. This form is for pre-registering a device before hardware deployment.
             </p>
             <div className="form-group">
@@ -1233,7 +1315,7 @@
               />
             </div>
             <div className="form-group">
-              <label className="label">Device Code (e.g., 2025 or NONE) *</label>
+              <label className="label">Device Code (e.g., 2025 or NONE for open access) *</label>
               <input
                 className="input"
                 value={formData.device_code}
@@ -1242,13 +1324,77 @@
               />
             </div>
             <div className="form-group">
-              <label className="label">Pilot UID (optional)</label>
+              <label className="label">Device Email (for notifications)</label>
+              <input
+                className="input"
+                value={formData.device_email}
+                onChange={(e) => setFormData(prev => ({ ...prev, device_email: e.target.value }))}
+                placeholder="email@example.com or NONE"
+              />
+            </div>
+            <div className="form-group">
+              <label className="label">Pilot UID (card UID that locks/unlocks this device)</label>
               <input
                 className="input"
                 value={formData.pilot_uid}
                 onChange={(e) => setFormData(prev => ({ ...prev, pilot_uid: e.target.value }))}
                 placeholder="NONE"
               />
+            </div>
+            <div className="form-group">
+              <label className="label">Upload Trigger UID (card UID to trigger manual upload)</label>
+              <input
+                className="input"
+                value={formData.upload_uid}
+                onChange={(e) => setFormData(prev => ({ ...prev, upload_uid: e.target.value }))}
+                placeholder="NONE"
+              />
+            </div>
+            <div className="form-group">
+              <label className="label">Allow Card Registration on Device</label>
+              <div className="toggle-container">
+                <button
+                  className={`toggle-btn ${formData.can_register ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, can_register: true }))}
+                >
+                  Yes
+                </button>
+                <button
+                  className={`toggle-btn ${!formData.can_register ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, can_register: false }))}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="label">Email on Unknown Card Scans</label>
+              <div className="toggle-container">
+                <button
+                  className={`toggle-btn ${formData.email_unknown_scans ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, email_unknown_scans: true }))}
+                >
+                  Yes
+                </button>
+                <button
+                  className={`toggle-btn ${!formData.email_unknown_scans ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, email_unknown_scans: false }))}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="label">Status Email For</label>
+              <select
+                className="input"
+                value={formData.email_status_for}
+                onChange={(e) => setFormData(prev => ({ ...prev, email_status_for: e.target.value }))}
+              >
+                <option value="NONE">None</option>
+                <option value="IN">IN</option>
+                <option value="OUT">OUT</option>
+              </select>
             </div>
             <button className="btn" onClick={handleRegisterDevice}>Register Device</button>
             {registerMessage && <div className="success">{registerMessage}</div>}
