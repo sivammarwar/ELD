@@ -516,10 +516,9 @@
 
       const handleSaveDevice = async (device) => {
         try {
-          // Normalize 'NONE' and empty strings - device_code cannot be null
-          const pilotUid = device.pilot_uid === 'NONE' || device.pilot_uid === '' ? null : device.pilot_uid;
-          const uploadUid = device.upload_uid === 'NONE' || device.upload_uid === '' ? null : device.upload_uid;
-          // device_code has NOT NULL constraint, so use empty string instead of null
+          // Normalize 'NONE' - these columns have NOT NULL constraint, use empty string
+          const pilotUid = device.pilot_uid === 'NONE' || device.pilot_uid === '' ? '' : device.pilot_uid;
+          const uploadUid = device.upload_uid === 'NONE' || device.upload_uid === '' ? '' : device.upload_uid;
           const deviceCode = device.device_code === 'NONE' ? '' : (device.device_code || '');
 
           const { error } = await supabase
@@ -542,7 +541,7 @@
           }
 
           // Only call RPC if pilot_uid actually changed and RPC exists
-          const originalPilot = device.original_pilot_uid === 'NONE' || device.original_pilot_uid === '' ? null : device.original_pilot_uid;
+          const originalPilot = device.original_pilot_uid === 'NONE' || device.original_pilot_uid === '' ? '' : device.original_pilot_uid;
           if (pilotUid !== originalPilot) {
             try {
               await supabase.rpc('update_device_pilot', {
