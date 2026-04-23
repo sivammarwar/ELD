@@ -369,53 +369,34 @@
             ) : (
               <div>
                 {placeStatus.map(place => {
-                  const placeTransitions = transitions[place.placeName] || [];
                   const isExpanded = expandedPlaces[place.placeName];
                   return (
                     <div key={place.placeName}>
-                      <div 
-                        className="place-row"
-                        onClick={() => setExpandedPlaces(prev => ({ ...prev, [place.placeName]: !isExpanded }))}
-                        style={{ cursor: 'pointer' }}
-                      >
+                      <div className="place-row">
                         <div>
                           <strong>{place.placeName}</strong>
-                          <span className="badge badge-in" style={{ marginLeft: 12 }}>{place.inCount} IN</span>
                         </div>
-                        <div style={{ fontSize: 12, color: '#6b7280' }}>
-                          {placeTransitions.length > 0 && `(${placeTransitions.length} moved)`}
-                          <span style={{ marginLeft: 8 }}>{isExpanded ? '▲' : '▼'}</span>
+                        <div>
+                          <span 
+                            className="badge badge-in" 
+                            onClick={() => setExpandedPlaces(prev => ({ ...prev, [place.placeName]: !isExpanded }))}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            {place.inCount} IN
+                          </span>
                         </div>
                       </div>
-                      {isExpanded && (
+                      {isExpanded && place.students.length > 0 && (
                         <div style={{ padding: '12px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                          {place.students.length === 0 ? (
-                            <div style={{ fontSize: 13, color: '#6b7280' }}>No students currently IN</div>
-                          ) : (
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
-                                Students currently IN:
-                              </div>
-                              {place.students.map((student, idx) => (
-                                <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                                  <span>{student.rollNumber}</span>
-                                  <span style={{ color: '#9ca3af' }}>UID: {student.uid}</span>
-                                </div>
-                              ))}
+                          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
+                            Students currently IN:
+                          </div>
+                          {place.students.map((student, idx) => (
+                            <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{student.rollNumber}</span>
+                              <span style={{ color: '#9ca3af' }}>UID: {student.uid}</span>
                             </div>
-                          )}
-                          {placeTransitions.length > 0 && (
-                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e5e7eb' }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
-                                Students who moved to other places (last 24 hours):
-                              </div>
-                              {placeTransitions.map((trans, idx) => (
-                                <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
-                                  UID: {trans.uid} → moved to <strong>{trans.to_place}</strong>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          ))}
                         </div>
                       )}
                     </div>
