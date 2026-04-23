@@ -695,6 +695,11 @@
       const [emailMessage, setEmailMessage] = useState(null);
       const [visibleCount, setVisibleCount] = useState(30);
 
+      // Sync formData with device prop when it changes (e.g., after save)
+      useEffect(() => {
+        setFormData({ ...device, original_pilot_uid: device.pilot_uid });
+      }, [device]);
+
       const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
       };
