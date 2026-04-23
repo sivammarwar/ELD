@@ -263,19 +263,8 @@
           });
 
           const logs = logsRes.data || [];
-          const uidStatuses = {};
-          logs.forEach(log => {
-            if (!uidStatuses[log.uid] || new Date(log.timestamp) > new Date(uidStatuses[log.uid].timestamp)) {
-              uidStatuses[log.uid] = log;
-            }
-          });
 
-          const currentlyIn = Object.values(uidStatuses).filter(u => u.status === 1).length;
-          const currentlyOut = Object.values(uidStatuses).filter(u => u.status === 0).length;
-
-          setStats({ activeDevices, registeredStudents, currentlyIn, currentlyOut });
-
-          // Process place-wise currently IN students
+          // Process place-wise currently IN students first
           // Group logs by place and uid, find last status for each student at each place
           const placeStudentMap = {};
           logs.forEach(log => {
@@ -300,6 +289,12 @@
               });
             }
           });
+
+          // Calculate totals from place-wise data
+          const totalInAcrossAllPlaces = Object.values(placeStudentsMap).reduce((sum, students) => sum + students.length, 0);
+          const uniqueStudentsIn = new Set(Object.values(placeStudentsMap).flat().map(s => s.uid)).size;
+
+          setStats({ activeDevices, registeredStudents, currentlyIn: totalInAcrossAllPlaces, currentlyOut: registeredStudents - uniqueStudentsIn });
 
           // Convert to array format for display
           const placeStatusArray = Object.keys(placeStudentsMap).map(placeName => ({
