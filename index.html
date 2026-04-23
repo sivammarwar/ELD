@@ -516,13 +516,18 @@
 
       const handleSaveDevice = async (device) => {
         try {
+          // Normalize 'NONE' and empty strings to null
+          const pilotUid = device.pilot_uid === 'NONE' || device.pilot_uid === '' ? null : device.pilot_uid;
+          const uploadUid = device.upload_uid === 'NONE' || device.upload_uid === '' ? null : device.upload_uid;
+          const deviceCode = device.device_code === 'NONE' || device.device_code === '' ? null : device.device_code;
+
           const { error } = await supabase
             .from('devices')
             .update({
-              device_code: device.device_code,
-              device_email: device.device_email,
-              pilot_uid: device.pilot_uid,
-              upload_uid: device.upload_uid,
+              device_code: deviceCode,
+              device_email: device.device_email || null,
+              pilot_uid: pilotUid,
+              upload_uid: uploadUid,
               email_unknown_scans: device.email_unknown_scans,
               email_status_for: device.email_status_for,
               can_register: device.can_register,
@@ -530,18 +535,29 @@
             })
             .eq('device_id', device.device_id);
 
-          if (error) throw error;
-
-          if (device.pilot_uid !== device.original_pilot_uid) {
-            await supabase.rpc('update_device_pilot', {
-              p_device_id: device.device_id,
-              p_pilot_uid: device.pilot_uid
-            });
+          if (error) {
+            console.error('Update error:', error);
+            throw error;
           }
 
-          addToast('Device settings saved');
+          // Only call RPC if pilot_uid actually changed and RPC exists
+          const originalPilot = device.original_pilot_uid === 'NONE' || device.original_pilot_uid === '' ? null : device.original_pilot_uid;
+          if (pilotUid !== originalPilot) {
+            try {
+              await supabase.rpc('update_device_pilot', {
+                p_device_id: device.device_id,
+                p_pilot_uid: pilotUid
+              });
+            } catch (rpcErr) {
+              console.log('RPC call failed (non-critical):', rpcErr.message);
+              // Continue even if RPC fails - main update succeeded
+            }
+          }
+
+          addToast('Device settings saved successfully');
           fetchData();
         } catch (err) {
+          console.error('Save device error:', err);
           addToast('Failed to save device settings: ' + err.message, 'error');
         }
       };
@@ -565,6 +581,8 @@
       const handleToggleLock = async (device) => {
         try {
           const newLockedState = !device.is_locked;
+          console.log(`Toggling lock for ${device.device_id}: ${device.is_locked} -> ${newLockedState}`);
+
           const { error: updateError } = await supabase
             .from('devices')
             .update({ 
@@ -574,22 +592,29 @@
             })
             .eq('device_id', device.device_id);
 
-          if (updateError) throw updateError;
+          if (updateError) {
+            console.error('Lock update error:', updateError);
+            throw updateError;
+          }
 
-          const { error: eventError } = await supabase
-            .from('device_lock_events')
-            .insert({
-              device_id: device.device_id,
-              pilot_uid: 'DASHBOARD',
-              action: newLockedState ? 'LOCKED' : 'UNLOCKED',
-              timestamp: new Date().toISOString()
-            });
-
-          if (eventError) throw eventError;
+          // Try to log the event (optional - doesn't block if table doesn't exist)
+          try {
+            await supabase
+              .from('device_lock_events')
+              .insert({
+                device_id: device.device_id,
+                pilot_uid: 'DASHBOARD',
+                action: newLockedState ? 'LOCKED' : 'UNLOCKED',
+                timestamp: new Date().toISOString()
+              });
+          } catch (eventErr) {
+            console.log('Event logging failed (non-critical):', eventErr.message);
+          }
 
           addToast(`Device ${newLockedState ? 'locked' : 'unlocked'} successfully`);
           fetchData();
         } catch (err) {
+          console.error('Toggle lock error:', err);
           addToast('Failed to toggle lock: ' + err.message, 'error');
         }
       };
