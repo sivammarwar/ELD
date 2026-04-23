@@ -499,6 +499,21 @@
         return () => supabase.removeChannel(channel);
       }, [fetchData]);
 
+      const handleLoadMoreLogs = async (deviceId, limit) => {
+        try {
+          const { data: logs, error } = await supabase
+            .from('access_logs')
+            .select('*')
+            .eq('device_id', deviceId)
+            .order('timestamp', { ascending: false })
+            .limit(limit);
+          if (error) throw error;
+          setDeviceLogs(prev => ({ ...prev, [deviceId]: logs || [] }));
+        } catch (err) {
+          addToast('Failed to load more logs', 'error');
+        }
+      };
+
       const handleSaveDevice = async (device) => {
         try {
           const { error } = await supabase
@@ -637,6 +652,7 @@
                           onSave={handleSaveDevice}
                           onSendEmail={handleSendStatusEmail}
                           onToggleLock={handleToggleLock}
+                          onLoadMoreLogs={handleLoadMoreLogs}
                         />
                       ))}
                     </div>
@@ -649,9 +665,10 @@
       );
     }
 
-    function DeviceCard({ device, logs, onSave, onSendEmail, onToggleLock }) {
+    function DeviceCard({ device, logs, onSave, onSendEmail, onToggleLock, onLoadMoreLogs }) {
       const [formData, setFormData] = useState({ ...device, original_pilot_uid: device.pilot_uid });
       const [emailMessage, setEmailMessage] = useState(null);
+      const [visibleCount, setVisibleCount] = useState(30);
 
       const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -666,6 +683,16 @@
         setEmailMessage('Email sent successfully');
         setTimeout(() => setEmailMessage(null), 3000);
       };
+
+      const handleShowMore = () => {
+        const newCount = visibleCount + 30;
+        setVisibleCount(newCount);
+        if (newCount > logs.length && onLoadMoreLogs) {
+          onLoadMoreLogs(device.device_id, newCount);
+        }
+      };
+
+      const visibleLogs = logs.slice(0, visibleCount);
 
       return (
         <div className="card">
@@ -807,31 +834,40 @@
           {logs.length === 0 ? (
             <div className="loading">No logs yet</div>
           ) : (
-            <div className="table-responsive">
-              <table className="table" style={{ fontSize: 12 }}>
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Roll</th>
-                    <th>UID</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map((log, idx) => (
-                    <tr key={idx}>
-                      <td>{new Date(log.timestamp).toLocaleString()}</td>
-                      <td>{log.roll_number}</td>
-                      <td>{log.uid}</td>
-                      <td>
-                        <span className={`badge ${log.status === 1 ? 'badge-in' : 'badge-out'}`}>
-                          {log.status === 1 ? 'IN' : 'OUT'}
-                        </span>
-                      </td>
+            <div>
+              <div className="table-responsive">
+                <table className="table" style={{ fontSize: 12 }}>
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Roll</th>
+                      <th>UID</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {visibleLogs.map((log, idx) => (
+                      <tr key={idx}>
+                        <td>{new Date(log.timestamp).toLocaleString()}</td>
+                        <td>{log.roll_number}</td>
+                        <td>{log.uid}</td>
+                        <td>
+                          <span className={`badge ${log.status === 1 ? 'badge-in' : 'badge-out'}`}>
+                            {log.status === 1 ? 'IN' : 'OUT'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {logs.length > visibleCount && (
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={handleShowMore}>
+                    Show More ({logs.length - visibleCount} remaining)
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
