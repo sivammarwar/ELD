@@ -516,10 +516,11 @@
 
       const handleSaveDevice = async (device) => {
         try {
-          // Normalize 'NONE' and empty strings to null
+          // Normalize 'NONE' and empty strings - device_code cannot be null
           const pilotUid = device.pilot_uid === 'NONE' || device.pilot_uid === '' ? null : device.pilot_uid;
           const uploadUid = device.upload_uid === 'NONE' || device.upload_uid === '' ? null : device.upload_uid;
-          const deviceCode = device.device_code === 'NONE' || device.device_code === '' ? null : device.device_code;
+          // device_code has NOT NULL constraint, so use empty string instead of null
+          const deviceCode = device.device_code === 'NONE' ? '' : (device.device_code || '');
 
           const { error } = await supabase
             .from('devices')
