@@ -54,41 +54,12 @@ $$;
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION dashboard_force_lock(TEXT, BOOLEAN) TO anon, authenticated;
 
--- ==============================================================
--- ALTERNATIVE SOLUTION: Timestamp-based sync for ESP32
--- ==============================================================
-
--- Add a trigger to prevent rapid lock toggles
-CREATE OR REPLACE FUNCTION prevent_rapid_lock_toggle()
-RETURNS TRIGGER AS $$
-DECLARE
-  v_last_change INTERVAL;
-BEGIN
-  -- Check time since last lock change
-  v_last_change = NOW() - OLD.locked_at;
-  
-  -- If trying to change lock state within 3 seconds of last change
-  -- And locked_by is changing from PILOT to DASHBOARD
-  -- Then skip (it's likely the pollDeviceLock() race condition)
-  IF v_last_change < INTERVAL '3 seconds' 
-     AND OLD.locked_by LIKE 'PILOT%' 
-     AND NEW.locked_by = 'DASHBOARD' THEN
-    RAISE NOTICE 'Preventing rapid lock toggle - keeping PILOT state';
-    RETURN OLD; -- Return old record, ignore new
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Apply trigger to devices table
+-- Drop the trigger if it was previously created (to avoid blocking ESP32 updates)
 DROP TRIGGER IF EXISTS prevent_rapid_lock ON devices;
-CREATE TRIGGER prevent_rapid_lock
-  BEFORE UPDATE ON devices
-  FOR EACH ROW
-  WHEN (OLD.is_locked IS DISTINCT FROM NEW.is_locked)
-  EXECUTE FUNCTION prevent_rapid_lock_toggle();
 
 -- ==============================================================
 -- DONE - Run this in Supabase SQL Editor
 -- ==============================================================
+
+-- NOTE: Using dashboard_force_lock() RPC instead of trigger
+-- Dashboard calls this function which respects recent pilot unlocks
