@@ -462,14 +462,14 @@
           if (error) throw error;
           setDevices(data || []);
 
-          // Fetch logs for each device
+          // Fetch logs for each device (100 initially)
           const logPromises = (data || []).map(async (device) => {
             const { data: logs } = await supabase
               .from('access_logs')
               .select('*')
               .eq('device_id', device.device_id)
               .order('timestamp', { ascending: false })
-              .limit(30);
+              .limit(100);
             return { deviceId: device.device_id, logs: logs || [] };
           });
 
@@ -861,13 +861,11 @@
                   </tbody>
                 </table>
               </div>
-              {logs.length > visibleCount && (
-                <div style={{ textAlign: 'center', marginTop: 12 }}>
-                  <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={handleShowMore}>
-                    Show More ({logs.length - visibleCount} remaining)
-                  </button>
-                </div>
-              )}
+              <div style={{ textAlign: 'center', marginTop: 12 }}>
+                <button className="btn btn-secondary" style={{ fontSize: 12 }} onClick={handleShowMore}>
+                  Show More
+                </button>
+              </div>
             </div>
           )}
         </div>
