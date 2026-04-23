@@ -239,8 +239,8 @@
 
           const [devicesRes, usersRes, logsRes] = await Promise.all([
             supabase.from('devices').select('device_id').eq('is_active', true),
-            supabase.from('valid_users').select('uid').eq('is_active', true),
-            supabase.from('access_logs').select('uid, place_name, status, timestamp').order('timestamp', { ascending: false }).limit(5000)
+            supabase.from('valid_users').select('uid, roll_number').eq('is_active', true),
+            supabase.from('access_logs').select('uid, roll_number, place_name, status, timestamp').order('timestamp', { ascending: false }).limit(5000)
           ]);
 
           if (devicesRes.error) throw devicesRes.error;
@@ -249,6 +249,12 @@
 
           const activeDevices = (devicesRes.data || []).length;
           const registeredStudents = (usersRes.data || []).length;
+
+          // Create UID to roll_number mapping
+          const userMap = {};
+          (usersRes.data || []).forEach(u => {
+            userMap[u.uid] = u.roll_number;
+          });
 
           const logs = logsRes.data || [];
           const uidStatuses = {};
@@ -263,25 +269,44 @@
 
           setStats({ activeDevices, registeredStudents, currentlyIn, currentlyOut });
 
-          // Use RPC function for place-wise status (includes transition logic)
-          const { data: placeData, error: placeError } = await supabase.rpc('get_place_wise_status');
-          if (placeError) throw placeError;
-
-          const placeStatusMap = {};
-          (placeData || []).forEach(p => {
-            placeStatusMap[p.place_name] = {
-              placeName: p.place_name,
-              inCount: p.in_count,
-              outCount: p.out_count,
-              inPercent: p.total_count > 0 ? (p.in_count / p.total_count) * 100 : 0
-            };
+          // Process place-wise currently IN students
+          // Group logs by place and uid, find last status for each student at each place
+          const placeStudentMap = {};
+          logs.forEach(log => {
+            if (!log.place_name) return;
+            const key = `${log.place_name}-${log.uid}`;
+            if (!placeStudentMap[key] || new Date(log.timestamp) > new Date(placeStudentMap[key].timestamp)) {
+              placeStudentMap[key] = log;
+            }
           });
 
-          setPlaceStatus(Object.values(placeStatusMap));
+          // Group by place, only include students whose last status is IN
+          const placeStudentsMap = {};
+          Object.values(placeStudentMap).forEach(log => {
+            if (log.status === 1) {
+              if (!placeStudentsMap[log.place_name]) {
+                placeStudentsMap[log.place_name] = [];
+              }
+              placeStudentsMap[log.place_name].push({
+                uid: log.uid,
+                rollNumber: log.roll_number || userMap[log.uid] || 'Unknown',
+                timestamp: log.timestamp
+              });
+            }
+          });
+
+          // Convert to array format for display
+          const placeStatusArray = Object.keys(placeStudentsMap).map(placeName => ({
+            placeName,
+            students: placeStudentsMap[placeName],
+            inCount: placeStudentsMap[placeName].length
+          })).sort((a, b) => a.placeName.localeCompare(b.placeName));
+
+          setPlaceStatus(placeStatusArray);
 
           // Fetch transitions for each place
           const transitionsMap = {};
-          for (const place of Object.keys(placeStatusMap)) {
+          for (const place of Object.keys(placeStudentsMap)) {
             const { data: transData, error: transError } = await supabase.rpc('get_place_transitions', { p_place_name: place, p_hours: 24 });
             if (!transError && transData) {
               transitionsMap[place] = transData;
@@ -338,9 +363,9 @@
           </div>
 
           <div className="card">
-            <h2 className="section-title">Place-wise IN/OUT Status</h2>
+            <h2 className="section-title">Place-wise Currently IN</h2>
             {placeStatus.length === 0 ? (
-              <div className="loading">No place data available</div>
+              <div className="loading">No students currently IN</div>
             ) : (
               <div>
                 {placeStatus.map(place => {
@@ -355,32 +380,42 @@
                       >
                         <div>
                           <strong>{place.placeName}</strong>
-                        </div>
-                        <div>
-                          <span className="badge badge-in">{place.inCount} IN</span>
-                        </div>
-                        <div>
-                          <span className="badge badge-out">{place.outCount} OUT</span>
-                        </div>
-                        <div>
-                          <div className="bar-container">
-                            <div className="bar-fill" style={{ width: `${place.inPercent}%` }}></div>
-                          </div>
+                          <span className="badge badge-in" style={{ marginLeft: 12 }}>{place.inCount} IN</span>
                         </div>
                         <div style={{ fontSize: 12, color: '#6b7280' }}>
                           {placeTransitions.length > 0 && `(${placeTransitions.length} moved)`}
+                          <span style={{ marginLeft: 8 }}>{isExpanded ? '▲' : '▼'}</span>
                         </div>
                       </div>
-                      {isExpanded && placeTransitions.length > 0 && (
+                      {isExpanded && (
                         <div style={{ padding: '12px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
-                            Students who moved to other places (last 24 hours):
-                          </div>
-                          {placeTransitions.map((trans, idx) => (
-                            <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
-                              UID: {trans.uid} → moved to <strong>{trans.to_place}</strong> at {new Date(trans.timestamp).toLocaleString()}
+                          {place.students.length === 0 ? (
+                            <div style={{ fontSize: 13, color: '#6b7280' }}>No students currently IN</div>
+                          ) : (
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
+                                Students currently IN:
+                              </div>
+                              {place.students.map((student, idx) => (
+                                <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                                  <span>{student.rollNumber}</span>
+                                  <span style={{ color: '#9ca3af' }}>UID: {student.uid}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
+                          {placeTransitions.length > 0 && (
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e5e7eb' }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
+                                Students who moved to other places (last 24 hours):
+                              </div>
+                              {placeTransitions.map((trans, idx) => (
+                                <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
+                                  UID: {trans.uid} → moved to <strong>{trans.to_place}</strong>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
