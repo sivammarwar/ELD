@@ -226,7 +226,7 @@
     // Overview Page
     function OverviewPage({ addToast }) {
       const [loading, setLoading] = useState(true);
-      const [stats, setStats] = useState({ activeDevices: 0, registeredStudents: 0, currentlyIn: 0, currentlyOut: 0 });
+      const [stats, setStats] = useState({ activeDevices: 0, registeredStudents: 0, currentlyIn: 0 });
       const [placeStatus, setPlaceStatus] = useState([]);
       const [transitions, setTransitions] = useState({});
       const [expandedPlaces, setExpandedPlaces] = useState({});
@@ -292,9 +292,8 @@
 
           // Calculate totals from place-wise data
           const totalInAcrossAllPlaces = Object.values(placeStudentsMap).reduce((sum, students) => sum + students.length, 0);
-          const uniqueStudentsIn = new Set(Object.values(placeStudentsMap).flat().map(s => s.uid)).size;
 
-          setStats({ activeDevices, registeredStudents, currentlyIn: totalInAcrossAllPlaces, currentlyOut: registeredStudents - uniqueStudentsIn });
+          setStats({ activeDevices, registeredStudents, currentlyIn: totalInAcrossAllPlaces });
 
           // Convert to array format for display
           const placeStatusArray = Object.keys(placeStudentsMap).map(placeName => ({
@@ -376,10 +375,6 @@
             <div className="stat-card">
               <div className="stat-label">Currently IN</div>
               <div className="stat-value">{stats.currentlyIn}</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-label">Currently OUT</div>
-              <div className="stat-value">{stats.currentlyOut}</div>
             </div>
           </div>
 
