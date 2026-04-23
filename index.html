@@ -238,7 +238,7 @@
           setError(null);
 
           const [devicesRes, usersRes, logsRes] = await Promise.all([
-            supabase.from('devices').select('device_id').eq('is_active', true),
+            supabase.from('devices').select('device_id, place_name, device_email, email_status_for').eq('is_active', true),
             supabase.from('valid_users').select('uid, roll_number').eq('is_active', true),
             supabase.from('access_logs').select('uid, roll_number, place_name, status, timestamp').order('timestamp', { ascending: false }).limit(5000)
           ]);
@@ -254,6 +254,12 @@
           const userMap = {};
           (usersRes.data || []).forEach(u => {
             userMap[u.uid] = u.roll_number;
+          });
+
+          // Create place_name to device mapping
+          const placeDeviceMap = {};
+          (devicesRes.data || []).forEach(d => {
+            placeDeviceMap[d.place_name] = d;
           });
 
           const logs = logsRes.data || [];
@@ -299,7 +305,8 @@
           const placeStatusArray = Object.keys(placeStudentsMap).map(placeName => ({
             placeName,
             students: placeStudentsMap[placeName],
-            inCount: placeStudentsMap[placeName].length
+            inCount: placeStudentsMap[placeName].length,
+            device: placeDeviceMap[placeName]
           })).sort((a, b) => a.placeName.localeCompare(b.placeName));
 
           setPlaceStatus(placeStatusArray);
@@ -320,6 +327,25 @@
           setLoading(false);
         }
       }, [addToast]);
+
+      const handleSendEmail = async (device) => {
+        if (!device || !device.device_email) {
+          addToast('No email configured for this device', 'error');
+          return;
+        }
+        try {
+          const { error } = await supabase.rpc('send_status_email', {
+            p_device_id: device.device_id,
+            p_place_name: device.place_name,
+            p_device_email: device.device_email,
+            p_status_filter: 'IN'
+          });
+          if (error) throw error;
+          addToast('Status email sent successfully');
+        } catch (err) {
+          addToast('Failed to send status email: ' + err.message, 'error');
+        }
+      };
 
       useEffect(() => {
         fetchData();
@@ -386,17 +412,32 @@
                           </span>
                         </div>
                       </div>
-                      {isExpanded && place.students.length > 0 && (
+                      {isExpanded && (
                         <div style={{ padding: '12px 16px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
-                            Students currently IN:
-                          </div>
-                          {place.students.map((student, idx) => (
-                            <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                              <span>{student.rollNumber}</span>
-                              <span style={{ color: '#9ca3af' }}>UID: {student.uid}</span>
+                          {place.students.length > 0 && (
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
+                                Students currently IN:
+                              </div>
+                              {place.students.map((student, idx) => (
+                                <div key={idx} style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                                  <span>{student.rollNumber}</span>
+                                  <span style={{ color: '#9ca3af' }}>UID: {student.uid}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
+                          {place.device && place.device.device_email && (
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #e5e7eb' }}>
+                              <button 
+                                className="btn btn-secondary" 
+                                style={{ fontSize: 12, padding: '6px 12px' }}
+                                onClick={() => handleSendEmail(place.device)}
+                              >
+                                Send Status Email ({place.device.device_email})
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
