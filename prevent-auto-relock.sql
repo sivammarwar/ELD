@@ -63,8 +63,11 @@ CREATE TRIGGER prevent_relock_after_pilot
 -- Just update the pollDeviceLock to respect pilot actions
 -- ==============================================================
 
+-- Drop the existing view first (needed when adding columns)
+DROP VIEW IF EXISTS device_lock_status CASCADE;
+
 -- Create a view that shows effective lock state considering recent pilot actions
-CREATE OR REPLACE VIEW device_lock_status AS
+CREATE VIEW device_lock_status AS
 SELECT 
   d.device_id,
   d.place_name,
@@ -86,7 +89,7 @@ SELECT
     SELECT 1 FROM device_lock_events e
     WHERE e.device_id = d.device_id
       AND e.action = 'UNLOCKED'
-      AND e.pilot_uid != 'DASHBOARD'  -- Only consider non-dashboard actions
+      AND e.pilot_uid != 'DASHBOARD'
       AND e.timestamp > NOW() - INTERVAL '15 seconds'
       AND (e.timestamp > d.locked_at OR d.locked_at IS NULL)
   ) as pilot_recently_unlocked,
