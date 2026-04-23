@@ -454,9 +454,10 @@
           setLoading(true);
           setError(null);
 
+          // Use device_lock_status view to get effective lock state (respects pilot unlocks)
           const { data, error } = await supabase
-            .from('devices')
-            .select('*')
+            .from('device_lock_status')
+            .select('device_id, place_name, device_code, device_email, pilot_uid, upload_uid, email_unknown_scans, email_status_for, can_register, is_active, firmware_version, last_seen, db_is_locked, locked_by, locked_at, effective_is_locked')
             .order('place_name', { ascending: true });
 
           if (error) throw error;
@@ -627,7 +628,7 @@
           {Object.entries(groupedDevices).map(([placeName, placeDevices]) => {
             const isExpanded = expandedPlace === placeName;
             const activeCount = placeDevices.filter(d => d.is_active).length;
-            const lockedCount = placeDevices.filter(d => d.is_locked).length;
+            const lockedCount = placeDevices.filter(d => d.effective_is_locked !== undefined ? d.effective_is_locked : d.db_is_locked).length;
 
             return (
               <div key={placeName} style={{ marginBottom: 16 }}>
@@ -726,7 +727,7 @@
               {device.firmware_version && ` | FW: ${device.firmware_version}`}
             </div>
             <div style={{ marginTop: 8 }}>
-              {device.is_locked ? (
+              {(device.effective_is_locked !== undefined ? device.effective_is_locked : device.db_is_locked) ? (
                 <span className="badge badge-locked">LOCKED</span>
               ) : (
                 <span className="badge badge-online">ONLINE</span>
