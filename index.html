@@ -583,32 +583,24 @@
           const newLockedState = !device.is_locked;
           console.log(`Toggling lock for ${device.device_id}: ${device.is_locked} -> ${newLockedState}`);
 
-          const { error: updateError } = await supabase
-            .from('devices')
-            .update({ 
-              is_locked: newLockedState,
-              locked_by: 'DASHBOARD',
-              locked_at: new Date().toISOString()
-            })
-            .eq('device_id', device.device_id);
+          // Use RPC function that prevents overwriting recent pilot changes
+          const { error } = await supabase.rpc('dashboard_force_lock', {
+            p_device_id: device.device_id,
+            p_locked: newLockedState
+          });
 
-          if (updateError) {
-            console.error('Lock update error:', updateError);
-            throw updateError;
-          }
-
-          // Try to log the event (optional - doesn't block if table doesn't exist)
-          try {
-            await supabase
-              .from('device_lock_events')
-              .insert({
-                device_id: device.device_id,
-                pilot_uid: 'DASHBOARD',
-                action: newLockedState ? 'LOCKED' : 'UNLOCKED',
-                timestamp: new Date().toISOString()
-              });
-          } catch (eventErr) {
-            console.log('Event logging failed (non-critical):', eventErr.message);
+          if (error) {
+            console.error('Lock RPC error:', error);
+            // Fallback to direct update if RPC doesn't exist
+            const { error: updateError } = await supabase
+              .from('devices')
+              .update({ 
+                is_locked: newLockedState,
+                locked_by: 'DASHBOARD',
+                locked_at: new Date().toISOString()
+              })
+              .eq('device_id', device.device_id);
+            if (updateError) throw updateError;
           }
 
           addToast(`Device ${newLockedState ? 'locked' : 'unlocked'} successfully`);
